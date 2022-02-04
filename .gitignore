@@ -30,3 +30,5 @@
 # Go workspace file
 go.work
 
+# Default stat files
+stat* 
