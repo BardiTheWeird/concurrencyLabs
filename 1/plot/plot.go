@@ -3,11 +3,16 @@ package main
 import (
 	"encoding/json"
 	"errors"
+	"flag"
 	"fmt"
 	"os"
 	"strings"
 
 	"github.com/Arafatk/glot"
+)
+
+var (
+	scaleForCells bool
 )
 
 type Measurement struct {
@@ -31,9 +36,15 @@ func fileExists(path string) bool {
 	return !errors.Is(err, os.ErrNotExist)
 }
 
-func parseArgsAndStatFiles() []PlotEntry {
+func parseArgsAndStatFiles() ([]PlotEntry, string) {
+	outPath := flag.String("o", "plot.png", "path to outputted plot")
+	flag.BoolVar(&scaleForCells, "xscale-cells", false, "scale by cells, not columns")
+	flag.Parse()
+
+	fmt.Println("outPath =", *outPath)
+
 	entriesToPlot := make([]PlotEntry, 0, len(os.Args))
-	for _, v := range os.Args[1:] {
+	for _, v := range flag.Args()[1:] {
 		split := strings.Split(v, ",")
 		if len(split) != 2 {
 			fmt.Printf("number of comma-delimited values in '%s' is not equal to 2, skipping\n", v)
@@ -66,7 +77,7 @@ func parseArgsAndStatFiles() []PlotEntry {
 		}
 	}
 
-	return entriesToPlot
+	return entriesToPlot, *outPath
 }
 
 func findMeasurementsMinOrMax(entries *[]Measurement, f func(old, cur Measurement) bool) Measurement {
@@ -107,7 +118,7 @@ func max(a, b int) int {
 }
 
 func main() {
-	entriesToPlot := parseArgsAndStatFiles()
+	entriesToPlot, outPath := parseArgsAndStatFiles()
 
 	dimensions := 2
 	persist := false
@@ -132,7 +143,11 @@ func main() {
 	plot.SetXrange(xMin, xMax)
 	plot.SetYrange(yMin, yMax)
 
-	plot.SetXLabel("Розмір матриці")
+	if scaleForCells {
+		plot.SetXLabel("(Розмір матриці)^2")
+	} else {
+		plot.SetXLabel("Розмір матриці")
+	}
 	plot.SetYLabel("Час (наносекунди)")
 
 	for _, plotEntry := range entriesToPlot {
@@ -143,6 +158,12 @@ func main() {
 		for i := 0; i < len(m); i++ {
 			data[0][i] = m[i].Size
 			data[1][i] = m[i].Time
+		}
+
+		if scaleForCells {
+			for i := 0; i < len(data); i++ {
+				data[0][i] *= data[0][i]
+			}
 		}
 
 		err = plot.AddPointGroup(
@@ -158,15 +179,5 @@ func main() {
 		}
 	}
 
-	plot.SavePlot("plot.png")
-
-	// plo
-
-	// for _, v := range entriesToPlot {
-	// 	fmt.Println("file:", v.filename)
-	// 	fmt.Println("legend name:", v.legendName)
-	// 	fmt.Println("command:", v.Command)
-	// 	fmt.Println("entries:", v.Entries)
-	// }
-
+	plot.SavePlot(outPath)
 }
