@@ -1,0 +1,251 @@
+.App {
+  text-align: center;
+  width: 850px;
+
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.messages {
+  display: flex;
+  flex-direction: column;
+
+  width: 600px;
+  height: 300px;
+
+  border: 2px solid rgba(107, 107, 68, 0.3);
+  border-radius: 5px;
+
+  padding: 10px;
+  padding-right: 15px;
+
+  scroll-behavior: smooth;
+  overflow: scroll;
+  overflow-x: hidden;
+
+  margin-bottom: 10px;
+}
+
+/* Scrollbar in Chromium-based */
+.messages::-webkit-scrollbar {
+  width: 5px;
+}
+
+.messages::-webkit-scrollbar-track {
+  background: none;
+}
+
+.messages::-webkit-scrollbar-thumb {
+  border-radius: 20px;
+  border: 3px solid rgba(107, 107, 68, 0.4);
+}
+
+/* Scrollbar in Firefox */
+.messages {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(107, 107, 68, 0.4) rgba(0,0,0,0);  
+}
+
+
+.message {
+  width: 350px;
+  border: 2px solid rgba(107, 107, 68, 0.3);
+  border-radius: 6px;
+  /* border-style: none solid none solid; */
+  /* border-style: none; */
+  /* padding: 5px; */
+
+  margin-bottom: 10px
+}
+
+.ownMessage {
+  margin-left: 250px;
+  background-color: rgba(104, 1, 1, 0.03);
+  border-color: rgba(107, 107, 68, 0.1);
+  /* border-style: none none none solid; */
+}
+
+.messageMetadata {
+  font-size: 14px;
+  /* font-style: italic; */
+  /* font-weight: 400; */
+  text-align: right;
+
+  color: #2c2e33;
+
+  margin-right: 4px;
+}
+
+.messageBody {
+  font-size: 17px;
+  text-align: left;
+  /* margin: auto 7px; */
+  margin: 5px;
+}
+
+.messageInput {
+  /* width: 615px; */
+  width: 100%;
+
+  display: flex;
+  flex-direction: row;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.messageInputAndSendButton {
+  width: 620px;
+  display: flex;
+  justify-content: space-between;
+  margin-left: 2px;
+}
+
+.textField {
+  background-color: beige;
+
+  border: 2px solid rgba(107, 107, 68, 0.3);
+  border-radius: 4px;
+}
+
+.textField:focus-visible {
+  outline: none;
+  border-color: rgba(107, 107, 68, 0.5);
+}
+
+.submitButton {
+  background-color: rgba(104, 1, 1, 0.03);
+  border: 2px solid rgba(107, 107, 68, 0.1);
+  border-radius: 4px;
+}
+
+.submitButton:hover {
+  background-color: beige;
+}
+
+.submitButton:active {
+  background-color: rgb(250, 250, 225);
+}
+
+.submitButton:focus-visible {
+  outline: none;
+  border-color: rgba(107, 107, 68, 0.5);
+}
+
+.sendMessageButton {
+  width: 80px;
+  height: 54px;
+  margin: 0;
+  padding: 0;
+}
+
+.sendControls {
+  width: 190px;
+  display: flex;
+  flex-direction: column;
+}
+
+.radio {
+  display: flex;
+}
+
+.schedulePicker {
+  display: flex;
+  flex-direction: row;
+}
+
+.messagInputField {
+  width: calc(500px - 10px * 2);
+  height: calc(50px - 10px * 2);
+  padding: 10px;
+}
+
+.loginForm {
+  width: 300px;
+  display: flex;
+  justify-content: space-around;
+}
+
+.usernameField {
+  width: calc(225px - 3px * 2);
+  padding: 0 3px 2px 3px;
+  height: inherit;
+}
+
+.loginButton {
+  padding: 2px 7px;
+}
+
+
+.interface {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+}
+
+.messagesUsers {
+  display: flex;
+  justify-content: space-between;
+}
+
+.messagingBlock {
+
+}
+
+.users {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+
+  width: 160px;
+  height: 300px;
+
+  border: 2px solid rgba(107, 107, 68, 0.3);
+  border-radius: 5px;
+
+  padding: 10px;
+  padding-right: 15px;
+
+  scroll-behavior: smooth;
+  overflow: scroll;
+  overflow-x: hidden;
+
+  margin-bottom: 10px;
+
+  font-size: 14px;
+}
+
+/* Scrollbar in Chromium-based */
+.users::-webkit-scrollbar {
+  width: 5px;
+}
+
+.users::-webkit-scrollbar-track {
+  background: none;
+}
+
+.users::-webkit-scrollbar-thumb {
+  border-radius: 20px;
+  border: 3px solid rgba(107, 107, 68, 0.4);
+}
+
+/* Scrollbar in Firefox */
+.users {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(107, 107, 68, 0.4) rgba(0,0,0,0);  
+}
+
+.userStatus {
+  width: 100%;
+  display: flex;
+  justify-content: space-between;
+}
+
+.username {
+
+}
+
+.userOffline {
+  color: grey;
+}
