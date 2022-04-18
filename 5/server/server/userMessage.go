@@ -20,12 +20,12 @@ func (u *userMessage) toTransport() []byte {
 	return bytes
 }
 
-func (s *Server) sendMessageToOnlineUsers(msg userMessage) {
+func (s *Server) sendMessageToOnlineUsers(msg userMessage, exceptSender bool) {
 	s.currentConnectionMutex.RLock()
 	defer s.currentConnectionMutex.RUnlock()
 
 	for username, ws := range s.currentConnection {
-		if msg.isReceiver(username) && username != msg.Sender {
+		if msg.isReceiver(username) && (!exceptSender || username != msg.Sender) {
 			sendProtoMsg(ws, "new_message", msg)
 		}
 	}
@@ -36,7 +36,6 @@ func (s *Server) pushUserMessageToHistory(msg userMessage) userMessage {
 	defer s.messagesMutex.Unlock()
 
 	msg.Timestamp = time.Now()
-	msg.Id = len(s.messages) + 1
 	s.messages = append(s.messages, msg)
 
 	return msg

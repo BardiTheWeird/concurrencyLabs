@@ -2,8 +2,6 @@ import './App.css'
 import { useEffect, useRef, useState } from 'react'
 
 import TextField from '@mui/material/TextField'
-import { AdapterMoment } from '@mui/x-date-pickers/AdapterMoment'
-import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider'
 import { DateTimePicker } from '@mui/x-date-pickers/DateTimePicker'
 
 import { useMessageStore } from './MessageStore'
@@ -12,8 +10,9 @@ import { useUserStore } from './UserStore'
 const moment = require('moment')
 
 function App() {
-  const [username, updateUsername] = useState()
-  const usernamePrompt = useRef("")
+  const forceRerender = useForceRerender()
+
+  const username = useRef("")
   const [loggedIn, updateLoggedIn] = useState(false)
   const [messages, pushMessage, pushMessages] = useMessageStore()
   const [users, setUser, setUsers] = useUserStore()
@@ -44,12 +43,16 @@ function App() {
     }
   }, [messages])
 
+  const messageInputBoxRef = useRef(null)
+
   const messageToSend = useRef(null)
   const ws = useRef(null)
 
   // const [ws, updateWs] = useState()
   useEffect(() => {
     const socket = new WebSocket("ws://127.0.0.1:8080")
+    socket.onclose = () => alert('connection closed')
+    socket.onerror = () => alert('connection error')
     socket.onopen = () => {
       ws.current = socket
 
@@ -61,8 +64,7 @@ function App() {
             switch (data) {
               case 'ok':
                 updateLoggedIn(true)
-                updateUsername(usernamePrompt.current)
-                console.log('logged in as', usernamePrompt.current)
+                console.log('logged in as', username.current)
                 break
               case 'bad_username':
                 alert('bad username')
@@ -100,24 +102,27 @@ function App() {
             })
             break
           case 'send_success':
-            if (messageToSend.current) {
-              const { id, timestamp } = data
-              const newMsg = {
-                id: id,
-                timestamp: new Date(timestamp),
-                sender: username,
-                body: messageToSend.current,
-                receivers: Array.from(selectedReceivers.current.keys())
-              }
-              pushMessage(newMsg)
-
-              messageToSend.current = null
+            if (!messageToSend.current) {
+              break
             }
+            const { id, timestamp } = data
+            pushMessage({
+              id: id,
+              timestamp: new Date(timestamp),
+              sender: username.current,
+              body: messageToSend.current,
+              receivers: Array.from(selectedReceivers.current.keys())
+            })
+
+            messageToSend.current = null
+            break
+          case 'schedule_success':
+            messageToSend.current = null
             break
           case 'send_fail':
             if (messageToSend.current) {
               messageToSend.current = null
-              console.log('failed seding a message:', data)
+              console.log('failed sending a message:', data)
             }
             break
           default:
@@ -146,10 +151,10 @@ function App() {
   }
 
   const LogIn = ifConnected(() => {
-    console.log('trying to log in as', usernamePrompt.current)
+    console.log('trying to log in as', username.current)
     ws.current.send(JSON.stringify({
       kind: "log_in",
-      data: usernamePrompt.current,
+      data: username.current,
     }))
   })
 
@@ -158,16 +163,17 @@ function App() {
       console.log('not logged in')
       return
     }
-    
+
     const msg = {body: msgPrompt.current};
     if (receiversType === "selected") {
       msg.receivers = Array.from(selectedReceivers.current.keys())
     }
     if (shouldSchedule) {
       msg.timestamp = scheduledDateTime.toDate()
+      msg.timestamp.setSeconds(0)
     }
 
-    console.log('sending message', msg)
+    console.log('sending', msg)
 
     messageToSend.current = msgPrompt.current
     ws.current.send(JSON.stringify({
@@ -178,15 +184,14 @@ function App() {
 
 return (
 <div className="App">
-  <h1>Welcome to hell, I guess</h1>
-
-  { !username &&
+  { !loggedIn &&
     <>
+    <h1>Welcome to hell, I guess</h1>
     <div className='loginForm'>
       <input className='textField usernameField' 
         type="text" 
         placeholder='username'
-        onChange={e => usernamePrompt.current = e.target.value}/>
+        onChange={e => username.current = e.target.value}/>
       <button className='submitButton loginButton' onClick={() => {
         LogIn()
       }}>Log in</button>
@@ -195,10 +200,10 @@ return (
     ||<div className='interface'>
         <div className='messagesUsers'>
           <div className='messagesBlock'>
-            <h2>Logged in as {username}</h2>
+            <h2>Logged in as {username.current}</h2>
             <div className='messages'>
             {
-              messages.map(v => <div className={`message ${v.sender === username && "ownMessage" || ""}`}>
+              messages.map(v => <div className={`message ${v.sender === username.current && "ownMessage" || ""}`}>
                 <div className='messageMetadata'>
                   {v.sender} at {`${v.timestamp.getDay()}.${v.timestamp.getMonth()}.${v.timestamp.getFullYear()}, ${v.timestamp.getHours()}:${v.timestamp.getMinutes()}:${v.timestamp.getSeconds()}`}
                 </div>
@@ -212,7 +217,8 @@ return (
           <h2>Users</h2>
           <div className='users'>
           {
-            users.map(({username, online}) => <div className='userStatus'>
+            users.filter(u => u.username !== username.current)
+              .map(({username, online}) => <div className='userStatus'>
               <input type="checkbox" className='userCheckbox' 
                 onChange={e => {
                   if (e.target.checked) {
@@ -233,11 +239,20 @@ return (
       </div>
       <div className='messageInput'>
         <div className='messageInputAndSendButton'>
-          <input className='textField messagInputField' type="textarea" wrap='hard'
+          <input type="textarea" wrap='hard'
+            ref={messageInputBoxRef}
+            className='textField messagInputField'
+            value={msgPrompt.current}
             onChange={e => msgPrompt.current = e.target.value}/>
-          <button className='submitButton sendMessageButton' onClick={() => {
-            SendMessage()
-          }}>Send</button>
+          <button className='submitButton sendMessageButton'
+            onClick={() => {
+              SendMessage()
+              msgPrompt.current = ""
+              forceRerender()
+              messageInputBoxRef.current.focus()
+            }}>
+            Send
+          </button>
         </div>
         <div className='sendControls'>
           <div className='radio receiverRadio' 
@@ -255,21 +270,15 @@ return (
                 checked={shouldSchedule} 
                 onChange={e => updateShouldSchedule(e.target.checked) } />
             </div>
-            <LocalizationProvider dateAdapter={AdapterMoment} >
-              <DateTimePicker
-                renderInput={(props) => <TextField variant="standard" size="small" {...props} />}
-                value={scheduledDateTime}
-                onChange={(newValue) => {
-                  updateScheduledDateTime(newValue);
-                }}
-                disabled={!shouldSchedule}
-                minDateTime={shouldSchedule ? curTime : moment('1970-01-01')}
-              />
-            </LocalizationProvider>
-            
-            {/* <input type="datetime-local" id="meeting-time"
-              name="meeting-time" value="2018-06-12T19:30"
-              min="2018-06-07T00:00" max="2018-06-14T00:00"></input> */}
+            <DateTimePicker
+              renderInput={(props) => <TextField variant="standard" size="small" {...props} />}
+              value={scheduledDateTime}
+              onChange={(newValue) => {
+                updateScheduledDateTime(newValue);
+              }}
+              disabled={!shouldSchedule}
+              minDateTime={shouldSchedule ? curTime : moment('1970-01-01')}
+            />
         </div>
         </div>
       </div>
@@ -280,3 +289,8 @@ return (
 }
 
 export default App
+
+const useForceRerender = () => {
+  const [, updateState] = useState()
+  return () => updateState(new Date())
+}
