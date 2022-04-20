@@ -18,20 +18,34 @@ import (
 
 func main() {
 	size := flag.Int("size", 10, "size of the arrays")
+	printArrays := flag.Bool("p", true, "whether to print array bodies")
 	flag.Parse()
+
+	getLogger := func(arrNum string) func(string, []int) {
+		if *printArrays {
+			return func(s string, arr []int) {
+				fmt.Println(s, arrNum, arr)
+			}
+		} else {
+			return func(s string, arr []int) {
+				fmt.Println(s, arrNum)
+			}
+		}
+
+	}
 
 	arr1Promise := ProcessArrAsync(
 		GenerateArrayAsync(*size),
 		ProcessArr1,
-		"1")
+		getLogger("1"))
 	arr2Promise := ProcessArrAsync(
 		GenerateArrayAsync(*size),
 		ProcessArr2,
-		"2")
+		getLogger("2"))
 	arr3Promise := ProcessArrAsync(
 		GenerateArrayAsync(*size),
 		ProcessArr3,
-		"3")
+		getLogger("3"))
 
 	arr1 := arr1Promise.Await()
 	arr2 := arr2Promise.Await()
@@ -42,17 +56,22 @@ func main() {
 	outArr = append(outArr, arr2...)
 	outArr = append(outArr, arr3...)
 
-	fmt.Println("result:", outArr)
+	if *printArrays {
+		fmt.Println("result:", outArr)
+	}
 }
 
-func ProcessArrAsync(arrPromise async.Promise[[]int], f func([]int) []int, arrNum string) async.Promise[[]int] {
+func ProcessArrAsync(arrPromise async.Promise[[]int],
+	f func([]int) []int,
+	logger func(string, []int)) async.Promise[[]int] {
+
 	return async.RunAsync(func() []int {
 		var arr []int = arrPromise.Await()
-		fmt.Println("arr          ", arrNum, arr)
+		logger("arr          ", arr)
 		arr = f(arr)
-		fmt.Println("processed arr", arrNum, arr)
+		logger("processed arr", arr)
 		sort.Ints(arr)
-		fmt.Println("sorted arr   ", arrNum, arr)
+		logger("sorted arr   ", arr)
 		return arr
 	})
 }
