@@ -3,9 +3,10 @@ package main
 import (
 	"flag"
 	"fmt"
+	"math/rand"
 	"parallel-computations-4/async"
-	"parallel-computations-4/utils"
 	"sort"
+	"time"
 )
 
 // [X] Створити 3 масиви (або колекції) з випадковими числами.
@@ -20,21 +21,21 @@ func main() {
 	flag.Parse()
 
 	arr1Promise := ProcessArrAsync(
-		utils.GenerateArrayAsync(*size),
+		GenerateArrayAsync(*size),
 		ProcessArr1,
 		"1")
 	arr2Promise := ProcessArrAsync(
-		utils.GenerateArrayAsync(*size),
+		GenerateArrayAsync(*size),
 		ProcessArr2,
 		"2")
 	arr3Promise := ProcessArrAsync(
-		utils.GenerateArrayAsync(*size),
+		GenerateArrayAsync(*size),
 		ProcessArr3,
 		"3")
 
-	arr1 := arr1Promise.Await().([]int)
-	arr2 := arr2Promise.Await().([]int)
-	arr3 := arr3Promise.Await().([]int)
+	arr1 := arr1Promise.Await()
+	arr2 := arr2Promise.Await()
+	arr3 := arr3Promise.Await()
 
 	outArr := make([]int, 0, len(arr1)+len(arr2)+len(arr3))
 	outArr = append(outArr, arr1...)
@@ -44,9 +45,9 @@ func main() {
 	fmt.Println("result:", outArr)
 }
 
-func ProcessArrAsync(arrPromise async.Promise, f func([]int) []int, arrNum string) async.Promise {
-	return async.RunAsync(func() interface{} {
-		var arr []int = arrPromise.Await().([]int)
+func ProcessArrAsync(arrPromise async.Promise[[]int], f func([]int) []int, arrNum string) async.Promise[[]int] {
+	return async.RunAsync(func() []int {
+		var arr []int = arrPromise.Await()
 		fmt.Println("arr          ", arrNum, arr)
 		arr = f(arr)
 		fmt.Println("processed arr", arrNum, arr)
@@ -99,4 +100,22 @@ func ProcessArr3(arr []int) []int {
 	}
 
 	return arrOut
+}
+
+func GenerateArrayAsync(size int) async.Promise[[]int] {
+	return async.RunAsync(func() []int {
+		return GenerateArray(size)
+	})
+}
+
+func GenerateArray(size int) []int {
+	randSource := rand.NewSource(time.Now().UnixNano())
+	rand := rand.New(randSource)
+
+	arr := make([]int, 0, size)
+	for i := 0; i < size; i++ {
+		arr = append(arr, rand.Intn(100))
+	}
+
+	return arr
 }
