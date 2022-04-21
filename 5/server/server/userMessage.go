@@ -62,33 +62,3 @@ func (u *userMessage) isVisibleToUser(username string) bool {
 func (u *userMessage) isReceiver(username string) bool {
 	return len(u.Receivers) == 0 || slices.Contains(u.Receivers, username)
 }
-
-// transported as
-// sender;receiver1,receiver2;sendTime;B64(body)\n
-// func (msg *UserMessage) ToDTO() []byte {
-// 	// sender
-// 	var dto []byte = []byte(msg.SenderName + ";")
-// 	// receivers
-// 	dto = append(dto, []byte(strings.Join(msg.ReceiversNames, ",")+";")...)
-
-// 	// send time
-// 	t, _ := msg.SendTime.MarshalText()
-// 	dto = append(dto, t...)
-// 	dto = append(dto, ';')
-
-// 	// body
-// 	bodyBytes := []byte(msg.Body)
-// 	b64Body := make([]byte, base64.StdEncoding.EncodedLen(len(bodyBytes)))
-// 	base64.StdEncoding.Encode(b64Body, bodyBytes)
-// 	dto = append(dto, b64Body...)
-
-// 	return append(dto, '\n')
-// }
-
-// func (s *Server) AppendUserMessage(msg UserMessage) time.Time {
-// 	s.messagesMutex.Lock()
-// 	defer s.messagesMutex.Unlock()
-// 	msg.SendTime = time.Now()
-// 	s.messages = append(s.messages, msg)
-// 	return msg.SendTime
-// }
